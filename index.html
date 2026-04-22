@@ -3,44 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REHAN ADMIN | Control Panel</title>
+    <title>REHAN ADMIN | Toolkit Manager</title>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Geist', sans-serif; }
-        body { background: #0b0b0f; color: #fff; padding: 20px; }
-        .grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
+        body { background: #050505; color: #fff; padding: 20px; }
         
-        .card { background: #111; border: 1px solid #222; border-radius: 15px; padding: 20px; height: 500px; display: flex; flex-direction: column; }
-        h2 { color: #5a67eb; margin-bottom: 15px; font-size: 18px; border-bottom: 1px solid #222; padding-bottom: 10px; }
+        .admin-container { max-width: 1100px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { color: #5a67eb; letter-spacing: 1px; }
+
+        .grid-layout { display: grid; grid-template-columns: 1fr; gap: 25px; }
+        @media (min-width: 850px) { .grid-layout { grid-template-columns: 350px 1fr; } }
+
+        /* --- Tool Uploader Card --- */
+        .card { background: #111; border: 1px solid #222; border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { font-size: 18px; margin-bottom: 15px; color: #5a67eb; border-bottom: 1px solid #222; padding-bottom: 10px; }
         
-        .list-box { flex: 1; overflow-y: auto; padding-right: 5px; }
-        .item { background: #000; border: 1px solid #333; padding: 12px; border-radius: 10px; margin-bottom: 10px; position: relative; }
+        input { width: 100%; background: #000; border: 1px solid #333; padding: 12px; border-radius: 10px; color: #fff; margin-bottom: 12px; outline: none; }
+        input:focus { border-color: #5a67eb; }
         
-        .btn-del { color: #ff4d4d; background: none; border: none; cursor: pointer; font-size: 11px; font-weight: 600; margin-top: 5px; }
-        .user-info { font-size: 13px; color: #888; }
-        .msg-text { color: #00ffcc; font-size: 14px; margin-bottom: 5px; }
+        .btn-add { background: #5a67eb; color: #fff; border: none; width: 100%; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .btn-add:hover { background: #4a56d4; }
+
+        /* --- Lists Section --- */
+        .list-container { max-height: 500px; overflow-y: auto; padding-right: 5px; }
+        .item-box { background: #0a0a0a; border: 1px solid #222; padding: 15px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .info h4 { color: #5a67eb; font-size: 15px; }
+        .info p { font-size: 12px; color: #777; margin-top: 3px; }
+        
+        .btn-del { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 11px; }
+        .btn-del:hover { background: #ff4d4d; color: #fff; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-    <h1 style="text-align:center; margin-bottom:30px;">ADMIN <span style="color:#5a67eb">DASHBOARD</span></h1>
+    <div class="admin-container">
+        <header>
+            <h1>ADMIN <span style="color:#fff">CONTROL</span></h1>
+            <p style="color:#555; font-size:12px;">Toolkit Management & User Database</p>
+        </header>
 
-    <div class="grid">
-        <div class="card">
-            <h2>Anonymous Messages</h2>
-            <div id="anon-list" class="list-box"></div>
-        </div>
+        <div class="grid-layout">
+            <div class="card">
+                <h2>Add New Tool</h2>
+                <input type="text" id="tool-name" placeholder="Tool Name (e.g. Web Scraper)">
+                <input type="text" id="tool-link" placeholder="Tool Link (URL)">
+                <input type="text" id="tool-img" placeholder="Icon Image URL">
+                <button class="btn-add" onclick="addNewTool()">Upload Tool</button>
+            </div>
 
-        <div class="card">
-            <h2>Toolkit Users</h2>
-            <div id="user-list" class="list-box"></div>
+            <div class="grid-layout" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                
+                <div class="card">
+                    <h2>Live Tools</h2>
+                    <div id="tools-list" class="list-container">
+                        </div>
+                </div>
+
+                <div class="card">
+                    <h2>Registered Users</h2>
+                    <div id="users-list" class="list-container">
+                        </div>
+                </div>
+
+            </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBDf2bhuMzbLo0OST-leggQm2QxxWyW_U",
@@ -54,39 +92,67 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Listen for Anonymous Messages
-        onSnapshot(query(collection(db, "anon_messages"), orderBy("timestamp", "desc")), (snap) => {
-            const list = document.getElementById('anon-list');
+        // 1. Add New Tool Function
+        window.addNewTool = async () => {
+            const name = document.getElementById('tool-name').value;
+            const link = document.getElementById('tool-link').value;
+            const img = document.getElementById('tool-img').value;
+
+            if(!name || !link) return alert("Details bhariye!");
+
+            try {
+                await addDoc(collection(db, "tools"), {
+                    name: name,
+                    link: link,
+                    image: img || "https://cdn-icons-png.flaticon.com/512/7075/7075330.png",
+                    timestamp: Date.now()
+                });
+                alert("Tool Added Successfully!");
+                document.getElementById('tool-name').value = "";
+                document.getElementById('tool-link').value = "";
+                document.getElementById('tool-img').value = "";
+            } catch (e) { alert("Error adding tool."); }
+        };
+
+        // 2. Load Tools Real-time
+        onSnapshot(query(collection(db, "tools"), orderBy("timestamp", "desc")), (snap) => {
+            const list = document.getElementById('tools-list');
             list.innerHTML = "";
             snap.forEach(d => {
-                const data = d.data();
+                const tool = d.data();
                 list.innerHTML += `
-                    <div class="item">
-                        <p class="msg-text">"${data.message}"</p>
-                        <span style="font-size:10px; color:#555;">${new Date(data.timestamp).toLocaleString()}</span><br>
-                        <button class="btn-del" onclick="removeData('anon_messages', '${d.id}')">Delete</button>
+                    <div class="item-box">
+                        <div class="info">
+                            <h4>${tool.name}</h4>
+                            <p>${tool.link.substring(0, 30)}...</p>
+                        </div>
+                        <button class="btn-del" onclick="deleteItem('tools', '${d.id}')">Remove</button>
                     </div>`;
             });
         });
 
-        // Listen for Registered Users
+        // 3. Load Users Real-time
         onSnapshot(query(collection(db, "users"), orderBy("joinedAt", "desc")), (snap) => {
-            const list = document.getElementById('user-list');
+            const list = document.getElementById('users-list');
             list.innerHTML = "";
             snap.forEach(d => {
                 const user = d.data();
                 list.innerHTML += `
-                    <div class="item">
-                        <p style="color:#5a67eb; font-weight:600;">${user.name}</p>
-                        <p class="user-info">Email: ${user.email}</p>
-                        <p class="user-info">Pass: <span style="color:#0f0">${user.password}</span></p>
-                        <button class="btn-del" onclick="removeData('users', '${d.id}')">Remove User</button>
+                    <div class="item-box">
+                        <div class="info">
+                            <h4>${user.name}</h4>
+                            <p>Email: ${user.email} | <span style="color:#0fcc">Pass: ${user.password}</span></p>
+                        </div>
+                        <button class="btn-del" onclick="deleteItem('users', '${d.id}')">Delete</button>
                     </div>`;
             });
         });
 
-        window.removeData = async (coll, id) => {
-            if(confirm("Are you sure?")) await deleteDoc(doc(db, coll, id));
+        // 4. Delete Function (Common)
+        window.deleteItem = async (coll, id) => {
+            if(confirm("Are you sure?")) {
+                await deleteDoc(doc(db, coll, id));
+            }
         };
     </script>
 </body>
