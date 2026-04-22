@@ -3,92 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rehan Admin | Master Control</title>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>REHAN ADMIN | Control Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Geist', sans-serif; }
-        body { background: #0f0f13; color: #fff; min-height: 100vh; padding: 20px; }
-        .hidden { display: none !important; }
+        body { background: #0b0b0f; color: #fff; padding: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; } }
         
-        /* Glass Cards */
-        .glass-card { 
-            background: rgba(255, 255, 255, 0.05); border: 1px solid #333; 
-            border-radius: 20px; padding: 25px; margin-bottom: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        h2 { color: #5a67eb; margin-bottom: 20px; font-size: 22px; display: flex; align-items: center; gap: 10px; }
+        .card { background: #111; border: 1px solid #222; border-radius: 15px; padding: 20px; height: 500px; display: flex; flex-direction: column; }
+        h2 { color: #5a67eb; margin-bottom: 15px; font-size: 18px; border-bottom: 1px solid #222; padding-bottom: 10px; }
         
-        input { 
-            width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px; 
-            border: 1px solid #333; background: #000; color: #fff; outline: none; 
-        }
-        .btn-main { 
-            background: #5a67eb; color: white; border: none; padding: 12px 25px; 
-            border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.3s;
-        }
-        .btn-main:hover { background: #4a56d4; }
-
-        /* Tables */
-        .table-container { overflow-x: auto; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { background: #1a1a24; padding: 12px; text-align: left; font-size: 14px; border-bottom: 2px solid #333; color: #888; }
-        td { padding: 12px; border-bottom: 1px solid #222; font-size: 14px; }
+        .list-box { flex: 1; overflow-y: auto; padding-right: 5px; }
+        .item { background: #000; border: 1px solid #333; padding: 12px; border-radius: 10px; margin-bottom: 10px; position: relative; }
         
-        .badge-user { background: rgba(90, 103, 235, 0.2); color: #5a67eb; padding: 4px 10px; border-radius: 6px; font-size: 12px; }
-        .btn-del { color: #ff4d4d; background: none; border: none; cursor: pointer; font-size: 12px; font-weight: 600; }
-        
-        /* Sections Grid */
-        .admin-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 900px) { .admin-grid { grid-template-columns: 350px 1fr; } }
+        .btn-del { color: #ff4d4d; background: none; border: none; cursor: pointer; font-size: 11px; font-weight: 600; margin-top: 5px; }
+        .user-info { font-size: 13px; color: #888; }
+        .msg-text { color: #00ffcc; font-size: 14px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
-    <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-        <h1 style="font-size: 24px;">REHAN <span style="color: #5a67eb;">ADMIN</span></h1>
-        <button onclick="location.reload()" class="btn-del">LOGOUT</button>
-    </header>
+    <h1 style="text-align:center; margin-bottom:30px;">ADMIN <span style="color:#5a67eb">DASHBOARD</span></h1>
 
-    <div id="admin-panel" class="admin-grid">
-        
-        <div class="glass-card">
-            <h2>Add New Tool</h2>
-            <input type="text" id="t-name" placeholder="Tool Name">
-            <input type="text" id="t-link" placeholder="Tool Vercel URL">
-            <input type="text" id="t-img" placeholder="Direct Image URL (.png/.jpg)">
-            <button onclick="addTool()" id="add-btn" class="btn-main" style="width: 100%;">Push to Toolkit</button>
+    <div class="grid">
+        <div class="card">
+            <h2>Anonymous Messages</h2>
+            <div id="anon-list" class="list-box"></div>
         </div>
 
-        <div class="glass-card">
-            <h2>Active Users List</h2>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Password</th>
-                            <th>Joined At</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="user-list">
-                        </tbody>
-                </table>
-            </div>
+        <div class="card">
+            <h2>Toolkit Users</h2>
+            <div id="user-list" class="list-box"></div>
         </div>
-
-    </div>
-
-    <div class="glass-card">
-        <h2>Live Tools Management</h2>
-        <div id="tools-display" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
-            </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCBDf2bhuMzbLo0OST-leggQm2QxxWyW_U",
@@ -102,76 +54,40 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // 1. ADD TOOL LOGIC
-        window.addTool = async function() {
-            const name = document.getElementById('t-name').value;
-            const link = document.getElementById('t-link').value;
-            const image = document.getElementById('t-img').value;
-            if(!name || !link || !image) return alert("Sari fields bharein!");
-
-            const btn = document.getElementById('add-btn');
-            btn.innerText = "Processing..."; btn.disabled = true;
-
-            try {
-                await addDoc(collection(db, "tools"), { name, link, image, timestamp: Date.now() });
-                alert("Tool Added Successfully!");
-                document.getElementById('t-name').value = "";
-                document.getElementById('t-link').value = "";
-                document.getElementById('t-img').value = "";
-            } catch (e) { alert(e.message); }
-            btn.innerText = "Push to Toolkit"; btn.disabled = false;
-        };
-
-        // 2. LOAD USERS LOGIC
-        function loadUsers() {
-            const q = query(collection(db, "users"), orderBy("joinedAt", "desc"));
-            onSnapshot(q, (snap) => {
-                const list = document.getElementById('user-list');
-                list.innerHTML = "";
-                snap.forEach(d => {
-                    const user = d.data();
-                    list.innerHTML += `
-                        <tr>
-                            <td><span class="badge-user">${user.name}</span></td>
-                            <td>${user.email}</td>
-                            <td style="font-family: monospace; color:#0f0;">${user.password}</td>
-                            <td style="color:#666; font-size:12px;">${user.joinedAt.split('T')[0]}</td>
-                            <td><button onclick="removeData('users', '${d.id}')" class="btn-del">Delete</button></td>
-                        </tr>
-                    `;
-                });
+        // Listen for Anonymous Messages
+        onSnapshot(query(collection(db, "anon_messages"), orderBy("timestamp", "desc")), (snap) => {
+            const list = document.getElementById('anon-list');
+            list.innerHTML = "";
+            snap.forEach(d => {
+                const data = d.data();
+                list.innerHTML += `
+                    <div class="item">
+                        <p class="msg-text">"${data.message}"</p>
+                        <span style="font-size:10px; color:#555;">${new Date(data.timestamp).toLocaleString()}</span><br>
+                        <button class="btn-del" onclick="removeData('anon_messages', '${d.id}')">Delete</button>
+                    </div>`;
             });
-        }
+        });
 
-        // 3. LOAD TOOLS LOGIC
-        function loadTools() {
-            const q = query(collection(db, "tools"), orderBy("timestamp", "desc"));
-            onSnapshot(q, (snap) => {
-                const container = document.getElementById('tools-display');
-                container.innerHTML = "";
-                snap.forEach(d => {
-                    const tool = d.data();
-                    container.innerHTML += `
-                        <div style="background:#000; padding:10px; border-radius:10px; text-align:center; border:1px solid #333;">
-                            <img src="${tool.image}" style="width:100%; height:80px; object-fit:cover; border-radius:5px;">
-                            <h4 style="font-size:12px; margin:8px 0;">${tool.name}</h4>
-                            <button onclick="removeData('tools', '${d.id}')" class="btn-del">Remove</button>
-                        </div>
-                    `;
-                });
+        // Listen for Registered Users
+        onSnapshot(query(collection(db, "users"), orderBy("joinedAt", "desc")), (snap) => {
+            const list = document.getElementById('user-list');
+            list.innerHTML = "";
+            snap.forEach(d => {
+                const user = d.data();
+                list.innerHTML += `
+                    <div class="item">
+                        <p style="color:#5a67eb; font-weight:600;">${user.name}</p>
+                        <p class="user-info">Email: ${user.email}</p>
+                        <p class="user-info">Pass: <span style="color:#0f0">${user.password}</span></p>
+                        <button class="btn-del" onclick="removeData('users', '${d.id}')">Remove User</button>
+                    </div>`;
             });
-        }
+        });
 
-        // DELETE FUNCTION
         window.removeData = async (coll, id) => {
-            if(confirm(`Are you sure you want to delete from ${coll}?`)) {
-                await deleteDoc(doc(db, coll, id));
-            }
+            if(confirm("Are you sure?")) await deleteDoc(doc(db, coll, id));
         };
-
-        // Start Loading
-        loadUsers();
-        loadTools();
     </script>
 </body>
 </html>
